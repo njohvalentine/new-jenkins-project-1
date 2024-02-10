@@ -1,23 +1,34 @@
-node('master') 
-{
-    stage('Continuous Download') 
-	{
-    git 'https://github.com/sunildevops77/maven.git'
-	}
-    stage('Continuous Build') 
-	{
-    sh label: '', script: 'mvn package'
-	}
-    stage('Continuous Deployment') 
-	{
-sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/ScriptedPipeline/webapp/target/webapp.war   ubuntu@172.31.26.217:/var/lib/tomcat8/webapps/qaenv.war'
-	}
-    stage('Continuous Testing') 
-	{
-              sh label: '', script: 'echo "Testing Passed"'
-	}
-    stage('Continuous Delivery') 
-	{
-sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/ScriptedPipeline/webapp/target/webapp.war   ubuntu@172.31.22.88:/var/lib/tomcat8/webapps/prodenv.war'
-	}
+pipeline {
+    agent any 
+    stages {
+        stage('checkout') { 
+            steps {
+                git branch: 'main', url: 'https://github.com/ttnwt/jenkins.git'
+            }
+        }
+	stage("sonarqube quality scan") {
+           steps {
+              sh 'mvn sonar:sonar'
+            }
+        }
+	stage('Quality gate') { 
+            steps {
+	        sleep 10
+                waitForQualityGate abortPipeline: true 
+            }
+        }
+        stage('build') { 
+            steps {
+	        echo 'packaging'
+                sh 'mvn package' 
+            }
+        }
+        stage('Deploy') { 
+            steps {
+                sh 'scp  /home/ubuntu/.jenkins/workspace/school2022/target/webappbatch2.war   ubuntu@172.31.17.230:/var/lib/tomcat8/webapps/qaenv.war'
+            }
+        }
+    }
 }
+
+
